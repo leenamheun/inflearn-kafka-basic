@@ -4,6 +4,7 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
+import producer.partitioner.CustomPartitioner
 import java.util.*
 
 private val TOPIC_NAME = "test"
