@@ -3,9 +3,6 @@
 
 인프런 강의 실습내용에 대한 예제 코드 입니다.  
 실습에서 제공하는 Java코드를 Kotlin으로 작성한 내용입니다.
-
----
-
 인프런 강의 실습에 대한 예제 코드는 아래의 github에서 다운로드 할 수 있다.  
 https://github.com/bjpublic/apache-kafka-with-java
 
