@@ -83,3 +83,147 @@ ps -ef | grep ShutdownConsumer
 //프로세스 종료
 kill -term {processId}
 ~~~
+
+---
+
+## Streams
+### 필터링 스트림즈 애플리케이션
+토픽을 생성한다
+~~~
+bin/kafka-topics.sh --bootstrap-server my-kafka:9092 --topic stream_log --create
+bin/kafka-topics.sh --bootstrap-server my-kafka:9092 --topic stream_log_filter --create
+~~~ 
+FilterStreams main()함수를 실행한다.  
+두 개의 창을 띄어 하나는 토픽을 추가하고 하나는 텍스트 길이가 5개 이상인 토픽이 저장되는 것을 확인한다.   
+토픽에 데이터를 전송한다.
+~~~
+bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 --topic stream_log
+~~~
+메시지 값의 길이가 5개 이상인 데이터만 아래의 토픽에 저장된다. 
+~~~
+bin/kafka-console-consumer.sh --bootstrap-server my-kafka:9092 --topic stream_log_filter
+~~~
+
+### KStreams와 KTable의 조인
+토픽을 생성한다.   
+코파티셔닝이 만족되기 위해 파티션이 3개이고 디폴트 파티셔닝 전략으로 생성한다. 
+~~~
+bin/kafka-topics.sh --create --bootstrap-server my-kafka:9092 \
+ --partitions 3 \
+ --topic address
+
+ bin/kafka-topics.sh --create --bootstrap-server my-kafka:9092 \
+ --partitions 3 \
+ --topic order
+
+ bin/kafka-topics.sh --create --bootstrap-server my-kafka:9092 \
+ --partitions 3 \
+ --topic order_join
+~~~
+KStreamsJoinKTable main()함수를 호출한다.   
+address와 order토픽에 데이터를 추가한다
+~~~
+bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 \
+ --topic address \
+ --property "parse.key=true" \
+ --property "key.separator=:"
+ 
+>namni:Seoul
+>somin:Busan
+~~~
+~~~
+bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 \
+ --topic order \
+ --property "parse.key=true" \
+ --property "key.separator=:"
+ 
+>somin:iPhone
+>namni:Galaxy
+~~~
+조회
+~~~
+bin/kafka-console-consumer.sh --bootstrap-server my-kafka:9092 \
+ --topic order_join \
+ --property print.key=true \
+ --property key.separator=":" \
+ --from-beginning
+ 
+somin:iPhone send to Busan
+namni:Galaxy send to Seoul 
+~~~
+새로 address와 order데이터를 추가한다. 
+~~~
+ bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 \
+ --topic address \
+ --property "parse.key=true" \
+ --property "key.separator=:"
+ 
+>namni:Jeju
+~~~
+~~~
+bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 \
+ --topic order \
+ --property "parse.key=true" \
+ --property "key.separator=:"
+ 
+>namni:Tesla
+~~~
+신규 데이터를 확인한다.
+~~~
+bin/kafka-console-consumer.sh --bootstrap-server my-kafka:9092 \
+ --topic order_join --from-beginning
+ 
+>Tesla send to Jeju
+~~~   
+
+
+
+### KStreams와 GlobalKTable의 조인
+토픽을 생성한다.  
+address_v2라는 토픽을 생성하고 partition을 2개 생성하여 코파티셔닝 되지 않도록 한다.
+~~~
+bin/kafka-topics.sh --create --bootstrap-server my-kafka:9092 \
+ --partitions 2 \
+ --topic address_v2
+~~~
+KStreamJoinGlobalKTable main()함수를 실행한다.    
+address_v2에 데이터를 추가한다
+~~~
+bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 \
+ --topic address_v2 \
+ --property "parse.key=true" \
+ --property "key.separator=:"
+
+>namni:Busan
+~~~
+order 데이터를 추가한다. 
+~~~
+bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 \
+ --topic order \
+ --property "parse.key=true" \
+ --property "key.separator=:"
+
+>namni:Tesla
+~~~
+신규 데이터를 확인한다.
+~~~
+bin/kafka-console-consumer.sh --bootstrap-server my-kafka:9092 \
+ --topic order_join --from-beginning
+~~~   
+
+### 프로세서API
+토픽을 생성한다(FilterStreams실습시 생성했다면 패쓰)
+~~~
+bin/kafka-topics.sh --bootstrap-server my-kafka:9092 --topic stream_log --create
+bin/kafka-topics.sh --bootstrap-server my-kafka:9092 --topic stream_log_filter --create
+~~~ 
+SimpleProcessor main()함수를 실행한다.  
+두 개의 창을 띄어 하나는 토픽을 추가하고 하나는 텍스트 길이가 5개 이상인 토픽이 저장되는 것을 확인한다.   
+토픽에 데이터를 전송한다.
+~~~
+bin/kafka-console-producer.sh --bootstrap-server my-kafka:9092 --topic stream_log
+~~~
+메시지 값의 길이가 5개 초과인 데이터만 아래의 토픽에 저장된다.
+~~~
+bin/kafka-console-consumer.sh --bootstrap-server my-kafka:9092 --topic stream_log_filter
+~~~
